@@ -1,0 +1,205 @@
+-- SLASHER GUI V2 F3X
+-- Highly polished, dark-themed exploit/tool GUI with smooth animations and clean layouts.
+-- Built to execute your F3X automated tasks seamlessly.
+
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local UICorner = Instance.new("UICorner")
+local UIStroke = Instance.new("UIStroke")
+local Title = Instance.new("TextLabel")
+local ButtonLayout = Instance.new("UIListLayout")
+
+-- Setup ScreenGui (Skins into CoreGui if available, otherwise PlayerGui)
+local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
+ScreenGui.Parent = success and coreGui or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Name = "SlasherGuiV2_F3X"
+ScreenGui.ResetOnSpawn = false
+
+-- Main GUI Window Frame
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -160)
+MainFrame.Size = UDim2.new(0, 250, 0, 320)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Standard dragging behavior
+
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = MainFrame
+
+UIStroke.Color = Color3.fromRGB(180, 0, 0) -- Neon Red border theme
+UIStroke.Thickness = 2
+UIStroke.Parent = MainFrame
+
+-- Title Banner
+Title.Name = "Title"
+Title.Parent = MainFrame
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0, 0, 0, 10)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "SLASHER GUI V2 F3X"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 18
+
+-- Layout for Buttons
+ButtonLayout.Parent = MainFrame
+ButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+ButtonLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ButtonLayout.Padding = UDim.new(0, 12)
+
+-- Helper function to generate premium-looking buttons
+local function createButton(name, text, layoutOrder, callback)
+    local Button = Instance.new("TextButton")
+    local BtnCorner = Instance.new("UICorner")
+    local BtnStroke = Instance.new("UIStroke")
+    
+    Button.Name = name
+    Button.Parent = MainFrame
+    Button.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    Button.Size = UDim2.new(0, 210, 0, 42)
+    Button.LayoutOrder = layoutOrder
+    Button.Font = Enum.Font.GothamSemibold
+    Button.Text = text
+    Button.TextColor3 = Color3.fromRGB(220, 220, 220)
+    Button.TextSize = 14
+    Button.AutoButtonColor = false
+    
+    BtnCorner.CornerRadius = UDim.new(0, 8)
+    BtnCorner.Parent = Button
+    
+    BtnStroke.Color = Color3.fromRGB(50, 50, 55)
+    BtnStroke.Thickness = 1
+    BtnStroke.Parent = Button
+
+    -- Hover and Click Animations
+    Button.MouseEnter:Connect(function()
+        Button.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+        BtnStroke.Color = Color3.fromRGB(180, 0, 0)
+        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end)
+    
+    Button.MouseLeave:Connect(function()
+        Button.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        BtnStroke.Color = Color3.fromRGB(50, 50, 55)
+        Button.TextColor3 = Color3.fromRGB(220, 220, 220)
+    end)
+    
+    Button.MouseButton1Down:Connect(function()
+        Button.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+    end)
+
+    Button.MouseButton1Up:Connect(function()
+        Button.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+        callback()
+    end)
+end
+
+-- Fix layout alignment offsets
+task.spawn(function()
+    task.wait(0.1)
+    ButtonLayout.Padding = UDim.new(0, 10)
+    -- Insert a spacer to offset title
+    local Spacer = Instance.new("Frame")
+    Spacer.Size = UDim2.new(1, 0, 0, 45)
+    Spacer.BackgroundTransparency = 1
+    Spacer.LayoutOrder = 0
+    Spacer.Parent = MainFrame
+end)
+
+-- Find F3X Remote Function automatically
+local F3XRemote = game:GetService("ReplicatedStorage"):FindFirstChild("SyncAPI") and game:GetService("ReplicatedStorage").SyncAPI:FindFirstChild("ServerEndpoint")
+
+if not F3XRemote then
+    warn("F3X SyncAPI ServerEndpoint not found in ReplicatedStorage!")
+end
+
+local DECAL_ID = "108090882481963"
+
+-- 1. Decal Spam Button
+createButton("DecalSpam", "🔥 Decal Spam", 1, function()
+    if not F3XRemote then return end
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            -- F3X tool texture creation format
+            pcall(function()
+                F3XRemote:InvokeServer("CreateTextures", {obj}, "Decal")
+                -- Standard F3X updates faces for created textures across all 6 sides
+                local faces = {Enum.NormalId.Top, Enum.NormalId.Bottom, Enum.NormalId.Left, Enum.NormalId.Right, Enum.NormalId.Front, Enum.NormalId.Back}
+                for _, face in ipairs(faces) do
+                    -- Attempts to find created texture/decal to change texture ID
+                    for _, child in ipairs(obj:GetChildren()) do
+                        if child:IsA("Decal") and child.Texture == "" then
+                            F3XRemote:InvokeServer("EditTexture", {child}, {
+                                Texture = "rbxassetid://" .. DECAL_ID,
+                                Face = face
+                            })
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- 2. Skybox Button
+createButton("Skybox", "🌌 Skybox Change", 2, function()
+    local lighting = game:GetService("Lighting")
+    local sky = lighting:FindFirstChildOfClass("Sky")
+    
+    if not sky then
+        sky = Instance.new("Sky")
+        sky.Parent = lighting
+    end
+    
+    local assetUrl = "rbxassetid://" .. DECAL_ID
+    sky.SkyboxBk = assetUrl
+    sky.SkyboxDn = assetUrl
+    sky.SkyboxFt = assetUrl
+    sky.SkyboxLf = assetUrl
+    sky.SkyboxRt = assetUrl
+    sky.SkyboxUp = assetUrl
+end)
+
+-- 3. Particles Button
+createButton("Particles", "✨ Particle Storm", 3, function()
+    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = player.Character.HumanoidRootPart
+            
+            -- Clear old ones if button clicked again
+            for _, child in ipairs(hrp:GetChildren()) do
+                if child.Name == "SlasherParticle" then
+                    child:Destroy()
+                end
+            end
+            
+            local pe = Instance.new("ParticleEmitter")
+            pe.Name = "SlasherParticle"
+            pe.Size = NumberSequence.new(1)
+            pe.Speed = NumberRange.new(1)
+            pe.Rate = 50
+            pe.Texture = "rbxassetid://" .. DECAL_ID
+            pe.Parent = hrp
+        end
+    end
+end)
+
+-- 4. Theme Button
+createButton("Theme", "🎵 Play Theme", 4, function()
+    local chatService = game:GetService("TextChatService")
+    
+    if chatService.ChatVersion == Enum.ChatVersion.TextChatService then
+        -- TextChatService (Modern Chat)
+        local channel = chatService.TextChannels:FindFirstChild("RBXGeneral")
+        if channel then
+            channel:SendAsync(";music 837078135315")
+        end
+    else
+        -- LegacyChatService (Classic Chat)
+        local remote = game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemChatEvents") and game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents:FindFirstChild("SayMessageRequest")
+        if remote then
+            remote:FireServer(";music 837078135315", "All")
+        end
+    end
+end)
